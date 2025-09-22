@@ -43,8 +43,8 @@ function Test-PrerequisiteDirectories {
     
     foreach ($dir in $requiredDirs) {
         if (-not (Test-Path $dir)) {
-            Write-ColorOutput "❌ Required directory missing: $dir" "Red"
-            Write-ColorOutput "💡 Run init-claude-project.ps1 first to set up the project structure" "Yellow"
+            Write-ColorOutput "Required directory missing: $dir" "Red"
+            Write-ColorOutput "Run init-claude-project.ps1 first to set up the project structure" "Yellow"
             return $false
         }
     }
@@ -60,7 +60,7 @@ function New-DirectoryStructure {
                 New-Item -ItemType Directory -Path $dir -Force | Out-Null
             }
             catch {
-                Write-ColorOutput "❌ Failed to create directory: $dir" "Red"
+                Write-ColorOutput "Failed to create directory: $dir" "Red"
                 Write-ColorOutput "   Error: $($_.Exception.Message)" "Red"
                 return $false
             }
@@ -89,346 +89,67 @@ function Initialize-ProductRoadmap {
     )
     
     if (-not (New-DirectoryStructure -Directories $phaseDirs)) {
-        Write-ColorOutput "❌ Failed to create phase directory structure" "Red"
+        Write-ColorOutput "Failed to create phase directory structure" "Red"
         return
     }
 
     # Create product vision template
-    $productVisionContent = @'
-# Product Vision
-
-## Product Overview
-**Product Name**: [Your Product Name]
-**Target Audience**: [Primary user segments]
-**Value Proposition**: [Core value delivered to users]
-
-## Long-term Vision (12-24 months)
-[Describe the ultimate vision for the product - what will it accomplish and how will it transform user workflows]
-
-## Success Metrics
-- **User Engagement**: [How you'll measure user adoption and engagement]
-- **Business Metrics**: [Revenue targets, growth rates, user retention goals]
-- **Technical Metrics**: [Performance benchmarks, reliability targets, scalability goals]
-
-## Core User Personas
-
-### Primary Persona: [Name/Title]
-- **Role**: [Job title or primary role]
-- **Goals**: [What they want to achieve with your product]
-- **Pain Points**: [Current challenges they face]
-- **Success Criteria**: [How they'll know the product is working for them]
-- **Technical Comfort**: [How comfortable they are with technology]
-
-### Secondary Persona: [Name/Title]  
-- **Role**: [Job title or primary role]
-- **Goals**: [What they want to achieve with your product]
-- **Pain Points**: [Current challenges they face]
-- **Success Criteria**: [How they'll know the product is working for them]
-- **Technical Comfort**: [How comfortable they are with technology]
-
-## Competitive Landscape
-- **Direct Competitors**: [Products that solve the same problem]
-- **Indirect Competitors**: [Alternative solutions users might choose]
-- **Competitive Advantages**: [What makes your approach unique and better]
-
-## Technical Vision
-- **Architecture Goals**: [Scalability, maintainability, performance objectives]
-- **Technology Choices**: [Key technology decisions and reasoning]
-- **Integration Requirements**: [External systems, APIs, services needed]
-- **Security Requirements**: [Data protection, privacy, compliance needs]
-'@
+  $productVisionTemplatePath = Join-Path $PSScriptRoot 'templates\phases-productvision.template.md'
+  if (Test-Path $productVisionTemplatePath) {
+    $productVisionContent = Get-Content $productVisionTemplatePath -Raw
+  } else {
+    Write-ColorOutput "Template not found: $productVisionTemplatePath" "Red"
+    $productVisionContent = ""
+  }
 
     try {
         $productVisionContent | Out-File -FilePath "docs\product-vision.md" -Encoding UTF8
-        Write-ColorOutput "✅ Created docs\product-vision.md" "Green"
+        Write-ColorOutput "Created docs\product-vision.md" "Green"
     }
     catch {
-        Write-ColorOutput "❌ Failed to create product-vision.md: $($_.Exception.Message)" "Red"
+        Write-ColorOutput "\Failed to create product-vision.md: $($_.Exception.Message)" "Red"
         return
     }
 
     # Create phase roadmap template
-    $roadmapContent = @'
-# Phase Roadmap
-
-## Phase Strategy
-**Development Approach**: Incremental delivery with user validation after each phase
-**Typical Phase Duration**: 6-8 weeks per phase
-**Success Criteria**: Each phase must deliver measurable user value and validate key assumptions
-
-## Phase Overview
-
-### Phase 1: Foundation & Core Features
-**Duration**: [Start date] - [End date]  
-**Theme**: Establish core user value and technical foundation
-**Primary Goal**: Get users successfully completing core workflows
-
-**Features**:
-- User authentication (email/password registration and login)
-- Contact management system (add, edit, delete, search contacts)
-- Basic task management (create, edit, complete tasks)
-- Responsive web interface for mobile and desktop
-- Basic user profile management
-
-**Success Criteria**:
-- [ ] Users can register and authenticate securely
-- [ ] Users can successfully manage their contact list
-- [ ] Users can create, edit, and complete basic tasks  
-- [ ] System passes security audit and performance benchmarks
-- [ ] Mobile-responsive design works on major devices
-- [ ] 70% of test users complete onboarding successfully
-
-**Key Assumptions to Validate**:
-- Users find value in combining contacts and tasks
-- Email/password authentication is sufficient initially
-- Basic task management meets core user needs
-
-**Dependencies**:
-- Design system finalized and approved
-- Database schema designed and reviewed
-- Authentication service/approach selected
-- Hosting and deployment platform chosen
-
----
-
-### Phase 2: Enhanced Authentication & Automation  
-**Duration**: [Start date] - [End date]
-**Theme**: Expand authentication options and add automation features
-**Primary Goal**: Reduce user friction and add workflow automation
-
-**Features**:
-- Social media authentication (Google, Facebook, GitHub)
-- Task reminder system with email notifications
-- Contact import from external sources (Gmail, Outlook, CSV)
-- Advanced task filtering, sorting, and search
-- Task categories and priority levels
-- Basic reporting and analytics
-
-**Success Criteria**:
-- [ ] Social authentication working for top 3 providers
-- [ ] Reminder system delivering notifications reliably (95%+ delivery rate)
-- [ ] Contact import working from major email providers
-- [ ] Advanced task management features adopted by 60%+ of users
-- [ ] User retention improves by 25% over Phase 1
-
-**Key Assumptions to Validate**:
-- Social login significantly improves user onboarding
-- Automated reminders increase task completion rates
-- Contact import is a valuable feature for user adoption
-
-**Dependencies**:
-- Phase 1 completed with stable user base
-- OAuth integrations approved and configured
-- Email notification service implemented and tested
-- User feedback from Phase 1 incorporated
-
----
-
-### Phase 3: Collaboration & Integration
-**Duration**: [Start date] - [End date]  
-**Theme**: Enable collaboration and external system integrations
-**Primary Goal**: Transform from personal tool to team collaboration platform
-
-**Features**:
-- Shared task lists and contact groups
-- Calendar integration (Google Calendar, Outlook, Apple Calendar)
-- Team collaboration features (assign tasks, comments, activity feed)
-- Mobile app (iOS/Android) or PWA
-- Advanced permissions and privacy controls
-- Integration with popular productivity tools
-
-**Success Criteria**:
-- [ ] Users can effectively share and collaborate on tasks
-- [ ] Calendar synchronization works bidirectionally
-- [ ] Team collaboration features increase user engagement by 40%
-- [ ] Mobile app maintains feature parity with web version
-- [ ] Integration usage demonstrates clear user value
-
-**Key Assumptions to Validate**:
-- Users want team collaboration features
-- Calendar integration is essential for adoption
-- Mobile access significantly increases daily usage
-
-**Dependencies**:
-- Phase 2 user feedback incorporated and successful
-- Calendar API integrations tested and approved
-- Mobile development resources and expertise available
-- Team collaboration features designed and tested
-
----
-
-### Phase 4: Advanced Features & Intelligence
-**Duration**: [Start date] - [End date]
-**Theme**: Advanced functionality and intelligent automation  
-**Primary Goal**: Differentiate through smart features and business insights
-
-**Features**:
-- AI-powered task suggestions and smart categorization
-- Advanced reporting, analytics, and business intelligence
-- Workflow automation and custom integrations
-- Enterprise features (SSO, admin controls, bulk operations)
-- API for third-party integrations
-- Advanced search with natural language processing
-
-**Success Criteria**:
-- [ ] AI suggestions demonstrably improve user productivity
-- [ ] Analytics provide actionable insights for users and business
-- [ ] Automation features reduce manual work by 30%+
-- [ ] Enterprise features drive premium plan conversions
-- [ ] API adoption shows ecosystem development
-
-**Key Assumptions to Validate**:
-- AI features provide genuine value vs. complexity
-- Advanced analytics are valued by target users
-- Enterprise market represents significant opportunity
-
-**Dependencies**:
-- Phase 3 adoption and success metrics achieved
-- AI/ML infrastructure and expertise available
-- Enterprise sales and support processes established
-- API design and developer experience validated
-
-## Inter-Phase Dependencies & Architecture
-
-### Data Migration Strategy
-- Each phase must maintain full backward compatibility
-- Database migrations must be reversible and tested
-- User data integrity maintained throughout all transitions
-- Performance must not degrade with additional features
-
-### User Experience Consistency
-- Design system maintained and evolved across all phases
-- User interface patterns remain consistent
-- Learning curve minimized for new features
-- Accessibility standards maintained throughout
-
-### Technical Architecture Evolution
-- System must scale to support each phase's user growth
-- Performance standards maintained: <2s page loads, 99.9% uptime
-- Security model must accommodate all planned features
-- Code quality and maintainability standards enforced
-
-### Business Model Progression
-- Phase 1: Establish product-market fit
-- Phase 2: Optimize for user growth and retention  
-- Phase 3: Enable premium features and team plans
-- Phase 4: Scale to enterprise and platform model
-
-## Risk Mitigation Strategy
-
-### Technical Risks
-- **Database Performance**: Early load testing, query optimization, caching strategy
-- **Third-party Integrations**: Fallback plans, rate limiting, error handling
-- **Mobile Development**: Progressive web app as backup to native apps
-- **AI/ML Complexity**: Start with simple rules, gradually introduce learning
-
-### Market Risks  
-- **Competition**: Continuous user research, rapid iteration, unique value props
-- **User Adoption**: Strong onboarding, user feedback loops, feature validation
-- **Monetization**: Test pricing early, multiple revenue streams, value demonstration
-
-### Resource Risks
-- **Team Scaling**: Hire ahead of need, strong documentation, knowledge sharing
-- **Technical Debt**: Regular refactoring sprints, code review standards
-- **External Dependencies**: Multiple vendor relationships, service agreements
-
-## Success Measurement Framework
-
-### Phase Completion Criteria
-Each phase is considered successful when:
-- All defined features are implemented and tested
-- Success criteria metrics are achieved or on clear trajectory
-- User feedback validates core assumptions
-- Technical performance meets defined standards
-- Next phase prerequisites are satisfied
-
-### Key Performance Indicators (KPIs)
-- **User Engagement**: Daily/Weekly/Monthly active users, session duration
-- **Feature Adoption**: % of users utilizing new features within 30 days
-- **User Satisfaction**: Net Promoter Score, user feedback ratings
-- **Technical Performance**: Page load times, error rates, uptime
-- **Business Metrics**: User acquisition cost, lifetime value, churn rate
-
-## Communication & Reporting
-
-### Stakeholder Updates
-- **Weekly**: Development progress, blockers, metrics
-- **Bi-weekly**: User research findings, feature adoption data
-- **Monthly**: Business metrics, strategic decisions, next phase planning
-- **Quarterly**: Overall roadmap review and adjustment
-
-### Decision Making Process
-- Product decisions based on user research and data
-- Technical decisions documented with reasoning and trade-offs
-- Major pivots require stakeholder alignment and user validation
-- Regular retrospectives to improve development process
-'@
+  $roadmapTemplatePath = Join-Path $PSScriptRoot 'templates\phases-roadmapcontent.template.md'
+  if (Test-Path $roadmapTemplatePath) {
+    $roadmapContent = Get-Content $roadmapTemplatePath -Raw
+  } else {
+    Write-ColorOutput "Template not found: $roadmapTemplatePath" "Red"
+    $roadmapContent = ""
+  }
 
     try {
         $roadmapContent | Out-File -FilePath "docs\phase-roadmap.md" -Encoding UTF8
-        Write-ColorOutput "✅ Created docs\phase-roadmap.md" "Green"
+        Write-ColorOutput "Created docs\phase-roadmap.md" "Green"
     }
     catch {
-        Write-ColorOutput "❌ Failed to create phase-roadmap.md: $($_.Exception.Message)" "Red"
+        Write-ColorOutput "Failed to create phase-roadmap.md: $($_.Exception.Message)" "Red"
         return
     }
 
     # Create architecture decisions template
-    $archDecisionsContent = @'
-# Architecture Decisions Record
-
-## Decision Format
-Each architectural decision should include:
-- **Date**: When the decision was made
-- **Status**: Proposed | Accepted | Deprecated | Superseded
-- **Context**: What forces led to this decision
-- **Decision**: What we decided to do
-- **Consequences**: Positive and negative outcomes expected
-
-## Decisions Log
-
-### $(Get-Date -Format 'yyyy-MM-dd') - Initial Technology Stack
-**Status**: Accepted  
-**Context**: Starting new web application project requiring modern, scalable architecture
-**Decision**: 
-- Frontend: React 18+ with TypeScript for type safety and developer experience
-- Backend: Node.js with Express for rapid development and team expertise
-- Database: PostgreSQL for relational data integrity and scalability
-- Deployment: Docker containers on cloud platform for consistency and scaling
-
-**Consequences**:
-- ✅ Strong type safety reduces runtime errors
-- ✅ Large ecosystem and community support
-- ✅ Team has expertise in chosen technologies
-- ✅ Modern tooling and development experience
-- ❌ Learning curve for team members new to TypeScript
-- ❌ Additional complexity in build pipeline
-
-### [Date] - Authentication Strategy  
-**Status**: Proposed
-**Context**: Need secure user authentication supporting future social login integration
-**Decision**: [To be determined]
-**Consequences**: [To be documented]
-
-### [Date] - Database Schema Design
-**Status**: Proposed  
-**Context**: Need flexible data model supporting contacts, tasks, and future collaboration features
-**Decision**: [To be determined]
-**Consequences**: [To be documented]
-'@
+  $archDecisionsTemplatePath = Join-Path $PSScriptRoot 'templates\phases-archdecisions.template.md'
+  if (Test-Path $archDecisionsTemplatePath) {
+    $archDecisionsContent = Get-Content $archDecisionsTemplatePath -Raw
+  } else {
+    Write-ColorOutput "Template not found: $archDecisionsTemplatePath" "Red"
+    $archDecisionsContent = ""
+  }
 
     try {
         $archDecisionsContent | Out-File -FilePath "docs\architecture\architecture-decisions.md" -Encoding UTF8
-        Write-ColorOutput "✅ Created docs\architecture\architecture-decisions.md" "Green"
+        Write-ColorOutput "Created docs\architecture\architecture-decisions.md" "Green"
     }
     catch {
-        Write-ColorOutput "❌ Failed to create architecture-decisions.md: $($_.Exception.Message)" "Red"
+        Write-ColorOutput "Failed to create architecture-decisions.md: $($_.Exception.Message)" "Red"
         return
     }
 
-    Write-ColorOutput "✅ Product roadmap initialized successfully!" "Green"
-    Write-ColorOutput "" "White"
-    Write-ColorOutput "📝 Next steps:" "Yellow"
+    Write-ColorOutput "Product roadmap initialized successfully!" "Green"
+    Write-ColorOutput "---" "White"
+    Write-ColorOutput "Next steps:" "Yellow"
     Write-ColorOutput "   1. Customize docs\product-vision.md with your specific product details" "White"
     Write-ColorOutput "   2. Review and adjust docs\phase-roadmap.md timeline and features" "White"
     Write-ColorOutput "   3. Run: .\manage-phases.ps1 -Action create-phase -PhaseNumber 1" "White"
@@ -443,7 +164,7 @@ function New-PhaseSpecification {
         [string]$PhaseName
     )
     
-    Write-ColorOutput "📋 Creating Phase $PhaseNumber specification..." "Cyan"
+    Write-ColorOutput "Creating Phase $PhaseNumber specification..." "Cyan"
     
     # Validate prerequisites
     if (-not (Test-PrerequisiteDirectories)) {
@@ -457,7 +178,7 @@ function New-PhaseSpecification {
     $phaseDirs = @($phaseDir, $srcPhaseDir)
     
     if (-not (New-DirectoryStructure -Directories $phaseDirs)) {
-        Write-ColorOutput "❌ Failed to create phase directories" "Red"
+        Write-ColorOutput "Failed to create phase directories" "Red"
         return
     }
 
@@ -473,404 +194,47 @@ function New-PhaseSpecification {
         $PhaseName = "Phase $PhaseNumber"
     }
 
-    # Create comprehensive phase specification
-    $phaseSpecContent = @"
-# Phase $PhaseNumber: $PhaseName
-
-## Phase Overview
-**Phase Number**: $PhaseNumber
-**Phase Name**: $PhaseName
-**Status**: 📋 Planning
-**Estimated Duration**: 6-8 weeks
-**Start Date**: [To be determined]
-**End Date**: [To be determined]
-**Theme**: [Brief description of what this phase is trying to achieve]
-
-## Phase Objectives
-**Primary Goal**: [What is the main outcome this phase should achieve]
-**Success Vision**: [How will you know this phase was successful]
-**User Value**: [What specific value will users get from this phase]
-
-## User Stories and Epics
-
-### Epic 1: [Main Feature Area Name]
-**Epic Goal**: As a [user type], I want [high-level capability] so that [business value].
-
-#### Story 1.1: [Specific Feature Name]
-- **As a** [specific user type]
-- **I want** [specific functionality]  
-- **So that** [specific benefit]
-- **Priority**: High | Medium | Low
-- **Effort**: [Story points or time estimate]
-- **Acceptance Criteria**:
-  - [ ] [Specific, testable condition]
-  - [ ] [Specific, testable condition]
-  - [ ] [Specific, testable condition]
-
-#### Story 1.2: [Specific Feature Name]
-- **As a** [specific user type]
-- **I want** [specific functionality]
-- **So that** [specific benefit]
-- **Priority**: High | Medium | Low
-- **Effort**: [Story points or time estimate]
-- **Acceptance Criteria**:
-  - [ ] [Specific, testable condition]
-  - [ ] [Specific, testable condition]
-
-### Epic 2: [Secondary Feature Area Name]
-**Epic Goal**: As a [user type], I want [high-level capability] so that [business value].
-
-[Repeat story structure for additional features]
-
-## Functional Requirements
-
-### Core Features
-1. **[Feature Name]**
-   - **Description**: [Detailed description of what this feature does]
-   - **User Interaction**: [How users will interact with this feature]
-   - **System Behavior**: [How the system responds and behaves]
-   - **Business Rules**: [Any business logic or rules that apply]
-   - **Edge Cases**: [What happens in unusual situations]
-   - **Integration Points**: [How this connects to other features or systems]
-
-2. **[Feature Name]**
-   - **Description**: [Detailed description of what this feature does]
-   - **User Interaction**: [How users will interact with this feature]
-   - **System Behavior**: [How the system responds and behaves]
-   - **Business Rules**: [Any business logic or rules that apply]
-   - **Edge Cases**: [What happens in unusual situations]
-   - **Integration Points**: [How this connects to other features or systems]
-
-### API Requirements
-#### New Endpoints Required
-- **POST** `/api/[endpoint]` - [Description of what this endpoint does]
-- **GET** `/api/[endpoint]` - [Description of what this endpoint does]
-- **PUT** `/api/[endpoint]` - [Description of what this endpoint does]
-- **DELETE** `/api/[endpoint]` - [Description of what this endpoint does]
-
-#### Modified Endpoints
-- **[METHOD]** `/api/[endpoint]` - [What changes are needed and why]
-
-#### Authentication & Authorization
-- [Define authentication requirements for this phase]
-- [Specify authorization rules and permissions]
-- [Document any new security requirements]
-
-### Database Schema Changes
-#### New Tables
-- **[table_name]**: [Purpose and key fields]
-- **[table_name]**: [Purpose and key fields]
-
-#### Modified Tables  
-- **[existing_table]**: [What columns or constraints are being added/changed]
-
-#### Data Migrations
-- [Describe any data migration requirements]
-- [Note any data transformation or cleanup needed]
-- [Document rollback strategy]
-
-## Non-Functional Requirements
-
-### Performance Requirements
-- **Page Load Time**: Maximum 2 seconds for initial page load
-- **API Response Time**: 95% of requests complete within 500ms
-- **Database Queries**: No query should take longer than 1 second
-- **Concurrent Users**: System must handle [X] simultaneous users
-- **Throughput**: [Expected requests per minute/hour]
-
-### Security Requirements
-- **Authentication**: [Specify authentication methods and requirements]
-- **Authorization**: [Define permission model and access controls] 
-- **Data Protection**: [Specify encryption and data handling requirements]
-- **Input Validation**: [Define validation and sanitization requirements]
-- **Audit Logging**: [Specify what actions need to be logged]
-
-### Usability Requirements
-- **User Experience**: [Define UX standards and expectations]
-- **Accessibility**: WCAG 2.1 AA compliance required
-- **Browser Support**: [Specify supported browsers and versions]
-- **Mobile Experience**: [Define mobile-specific requirements]
-- **Internationalization**: [Specify multi-language support needs]
-
-### Reliability Requirements
-- **Uptime**: 99.9% availability during business hours
-- **Error Rate**: Less than 1% of requests should result in errors
-- **Data Integrity**: Zero data loss tolerance
-- **Backup & Recovery**: [Define backup and recovery requirements]
-
-## Design Requirements
-
-### User Interface Requirements
-#### New UI Components Needed
-- **[Component Name]**: [Purpose and key functionality]
-- **[Component Name]**: [Purpose and key functionality]
-
-#### Modified UI Components  
-- **[Existing Component]**: [What changes are needed]
-
-#### Design System Extensions
-- **New Design Tokens**: [Any new colors, typography, spacing needed]
-- **New Patterns**: [Any new UI patterns or guidelines needed]
-- **Component Variants**: [New variations of existing components]
-
-### User Experience Flows
-1. **[Flow Name]**: [Description of complete user journey]
-   - Step 1: [User action and system response]
-   - Step 2: [User action and system response]
-   - Step 3: [User action and system response]
-   - Success: [What constitutes successful completion]
-   - Errors: [How errors are handled and user is guided]
-
-2. **[Flow Name]**: [Description of complete user journey]
-   - [Repeat flow structure]
-
-### Responsive Design Requirements
-- **Mobile (320px-767px)**: [Specific mobile behavior and layout]
-- **Tablet (768px-1023px)**: [Specific tablet behavior and layout]
-- **Desktop (1024px+)**: [Desktop layout and functionality]
-
-## Technical Architecture
-
-### Frontend Architecture Changes
-#### New Modules/Pages
-- **[Module/Page Name]**: [Purpose and key functionality]
-- **[Module/Page Name]**: [Purpose and key functionality]
-
-#### State Management Strategy
-- [Define how application state will be managed for new features]
-- [Specify any new state management patterns needed]
-- [Document data flow between components]
-
-#### Routing Changes
-- **New Routes**: [List new application routes]
-- **Modified Routes**: [Any changes to existing routes]
-- **Route Protection**: [Authentication/authorization for routes]
-
-#### Third-party Integrations
-- **[Service Name]**: [What integration is needed and why]
-- **[Service Name]**: [What integration is needed and why]
-
-### Backend Architecture Changes
-#### New Services
-- **[Service Name]**: [Purpose and key responsibilities]
-- **[Service Name]**: [Purpose and key responsibilities]
-
-#### Modified Services
-- **[Existing Service]**: [What changes are needed]
-
-#### External API Integrations
-- **[API Name]**: [What data/functionality will be integrated]
-- **[API Name]**: [What data/functionality will be integrated]
-
-#### Background Jobs & Processing
-- **[Job Name]**: [What background processing is needed]
-- **[Job Name]**: [What background processing is needed]
-
-### Infrastructure Requirements
-#### New Infrastructure Components
-- [Any new servers, databases, services needed]
-- [Caching requirements]
-- [CDN or asset delivery needs]
-
-#### Monitoring & Alerting
-- [New metrics that need to be tracked]
-- [Alerts that should be configured]
-- [Logging requirements for new features]
-
-#### Deployment Changes
-- [Any changes to deployment process]
-- [New environment variables or configuration]
-- [Rollback procedures for this phase]
-
-## Dependencies
-
-### Internal Dependencies (Must be completed first)
-#### Previous Phase Requirements
-- [ ] [Specific deliverable from previous phase]
-- [ ] [Specific deliverable from previous phase]
-
-#### Shared Infrastructure
-- [ ] [Database changes deployed]
-- [ ] [Shared components available]
-- [ ] [Authentication system ready]
-
-### External Dependencies
-#### Third-party Services
-- [ ] [Service account created and configured]
-- [ ] [API access granted and tested]
-- [ ] [Service level agreements in place]
-
-#### Team Dependencies
-- [ ] **Design**: [Specific design deliverables needed]
-- [ ] **DevOps**: [Infrastructure or deployment work needed]
-- [ ] **QA**: [Testing resources and timeline]
-- [ ] **Legal/Compliance**: [Any approvals or reviews needed]
-
-### Resource Dependencies
-- [ ] **Development Team**: [Required team composition and availability]
-- [ ] **Budget**: [Any costs for services, tools, or resources]
-- [ ] **Timeline**: [External deadlines that could impact the phase]
-
-## Acceptance Criteria & Definition of Done
-
-### Phase Completion Criteria
-This phase is considered complete when ALL of the following are met:
-
-#### Functional Completeness
-- [ ] All user stories completed and tested
-- [ ] All acceptance criteria verified
-- [ ] All API endpoints implemented and documented
-- [ ] All database changes deployed and tested
-
-#### Quality Standards
-- [ ] All code reviewed and approved
-- [ ] Test coverage meets requirements (minimum 80% for critical paths)
-- [ ] Performance requirements validated
-- [ ] Security requirements implemented and verified
-- [ ] Accessibility requirements tested and confirmed
-
-#### User Experience
-- [ ] All UI components implemented per design specifications
-- [ ] User flows tested end-to-end
-- [ ] Mobile responsive design verified
-- [ ] Cross-browser compatibility confirmed
-
-#### Documentation & Deployment
-- [ ] Technical documentation updated
-- [ ] User documentation created
-- [ ] Deployment completed successfully
-- [ ] Monitoring and alerting configured
-
-### Success Metrics
-#### User Engagement Metrics
-- **Feature Adoption**: [X]% of users try new features within 30 days
-- **Task Completion**: [X]% of users successfully complete core workflows
-- **User Retention**: [X]% of users return within 7 days
-- **Session Duration**: Average session increases by [X] minutes
-
-#### Technical Performance Metrics
-- **Page Load Performance**: <2 seconds average load time
-- **API Performance**: <500ms average response time
-- **Error Rates**: <1% of requests result in errors
-- **System Uptime**: >99.9% availability
-
-#### Business Metrics
-- **User Acquisition**: [Target number] of new registrations
-- **User Satisfaction**: >4.0/5.0 average rating
-- **Support Load**: <5% of users contact support
-- **Feature Usage**: Core features used by >70% of active users
-
-### Testing Requirements
-#### Unit Testing
-- [ ] All business logic covered by unit tests
-- [ ] All utility functions tested
-- [ ] Edge cases and error conditions tested
-- [ ] Test coverage reports generated
-
-#### Integration Testing
-- [ ] API endpoints tested with various inputs
-- [ ] Database operations tested
-- [ ] Third-party integrations tested
-- [ ] End-to-end user workflows tested
-
-#### Performance Testing
-- [ ] Load testing completed for expected traffic
-- [ ] Database query performance verified
-- [ ] Frontend bundle size optimized
-- [ ] Mobile performance tested on real devices
-
-#### Security Testing
-- [ ] Input validation tested
-- [ ] Authentication and authorization verified
-- [ ] Data protection measures tested
-- [ ] Vulnerability scanning completed
-
-## Risk Assessment & Mitigation
-
-### High-Priority Risks
-#### Risk 1: [Risk Description]
-- **Impact**: High | Medium | Low
-- **Probability**: High | Medium | Low
-- **Mitigation Strategy**: [How to reduce or handle this risk]
-- **Contingency Plan**: [What to do if the risk materializes]
-- **Owner**: [Who is responsible for monitoring this risk]
-
-#### Risk 2: [Risk Description]
-- **Impact**: High | Medium | Low
-- **Probability**: High | Medium | Low
-- **Mitigation Strategy**: [How to reduce or handle this risk]
-- **Contingency Plan**: [What to do if the risk materializes]
-- **Owner**: [Who is responsible for monitoring this risk]
-
-### Medium-Priority Risks
-[Follow same format for medium-priority risks]
-
-### Risk Monitoring
-- **Review Frequency**: Weekly risk assessment in team meetings
-- **Escalation Criteria**: [When risks should be escalated to stakeholders]
-- **Risk Register**: [Where risks are tracked and updated]
-
-## Out of Scope
-**Explicitly excluded from this phase:**
-- [Feature or capability intentionally not included]
-- [Integration or platform not supported in this phase]
-- [Advanced functionality deferred to later phase]
-- [Nice-to-have features that could cause scope creep]
-
-**Deferred to Future Phases:**
-- [Features that are planned but not in this phase]
-- [Improvements that will be addressed later]
-- [Scalability enhancements for future growth]
-
-## Phase Transition Criteria
-
-### Ready for Next Phase When:
-- [ ] All acceptance criteria met and verified
-- [ ] Success metrics achieved or on clear trajectory to achievement
-- [ ] User feedback collected and major issues addressed
-- [ ] Technical debt documented and prioritized
-- [ ] System stable in production for minimum 2 weeks
-- [ ] Team retrospective completed and improvements identified
-- [ ] Next phase dependencies satisfied
-- [ ] Stakeholder approval received
-
-### Handoff Documentation Required:
-- [ ] Technical architecture decisions documented
-- [ ] API documentation complete and current
-- [ ] Deployment procedures updated
-- [ ] Known issues and technical debt cataloged
-- [ ] User feedback summary and recommendations
-- [ ] Performance baselines and monitoring setup
-- [ ] Security audit results and any required follow-up
-
-## Approval & Sign-off
-
-**Specification Approved By:**
-- [ ] Product Owner: _________________ Date: _________
-- [ ] Technical Lead: ________________ Date: _________  
-- [ ] Design Lead: __________________ Date: _________
-- [ ] QA Lead: _____________________ Date: _________
-
-**Change Management:**
-Any changes to this specification after approval must be:
-- Documented with rationale and impact assessment
-- Approved by original signatories
-- Communicated to all stakeholders
-- Updated in project tracking systems
-
----
-**Document Version**: 1.0
-**Created**: $(Get-Date -Format 'yyyy-MM-dd')
-**Last Updated**: $(Get-Date -Format 'yyyy-MM-dd')
-**Next Review**: [Schedule regular review dates]
-"@
+    # Create comprehensive phase specification using hybrid approach
+    $phaseSpecHeader = @()
+    $phaseSpecHeader += "# Phase $PhaseNumber : $PhaseName"
+    $phaseSpecHeader += ""
+    $phaseSpecHeader += "## Phase Overview"
+    $phaseSpecHeader += "**Phase Number**: $PhaseNumber"
+    $phaseSpecHeader += "**Phase Name**: $PhaseName"
+    $phaseSpecHeader += "**Status**: 📋 Planning"
+    $phaseSpecHeader += "**Estimated Duration**: 6-8 weeks"
+    $phaseSpecHeader += "**Start Date**: [To be determined]"
+    $phaseSpecHeader += "**End Date**: [To be determined]"
+    $phaseSpecHeader += "**Theme**: [Brief description of what this phase is trying to achieve]"
+    $phaseSpecHeader += ""
+
+    # Read the static template content (everything after the header)
+    $phaseSpecTemplatePath = Join-Path $PSScriptRoot 'templates' 'phases-phasespec.template.md'
+    if (-not (Test-Path $phaseSpecTemplatePath)) {
+        Write-ColorOutput "[ERROR] Phase spec template file not found: $phaseSpecTemplatePath" "Red"
+        return
+    }
+    $phaseSpecBody = Get-Content $phaseSpecTemplatePath -Raw
+
+    # Remove the first header block from the template (since we build it dynamically)
+    # The template starts with '## Phase Overview' and the next 7 lines are the static header
+    $phaseSpecBodyLines = $phaseSpecBody -split "`r?`n"
+    $headerEndIndex = ($phaseSpecBodyLines | Select-String -Pattern '^## Phase Objectives' -SimpleMatch).LineNumber
+    if ($headerEndIndex) {
+        $phaseSpecBody = ($phaseSpecBodyLines[$headerEndIndex-1..($phaseSpecBodyLines.Length-1)] -join "`n")
+    } else {
+        # Fallback: just use the whole template if the marker is not found
+    }
+
+    # Combine the dynamic header and the static body
+    $phaseSpecContent = ($phaseSpecHeader -join "`n") + "`n" + $phaseSpecBody
 
     try {
         $phaseSpecContent | Out-File -FilePath "$phaseDir\spec.md" -Encoding UTF8
-        Write-ColorOutput "✅ Created $phaseDir\spec.md" "Green"
+        Write-ColorOutput "Created $phaseDir\spec.md" "Green"
     }
     catch {
-        Write-ColorOutput "❌ Failed to create spec.md: $($_.Exception.Message)" "Red"
+        Write-ColorOutput "Failed to create spec.md: $($_.Exception.Message)" "Red"
         return
     }
 
@@ -888,690 +252,60 @@ function New-PhaseImplementationPlan {
         [string]$PhaseNumber
     )
     
-    Write-ColorOutput "📊 Creating implementation plan for Phase $PhaseNumber..." "Cyan"
+    Write-ColorOutput "Creating implementation plan for Phase $PhaseNumber..." "Cyan"
     
     $phaseDir = "docs\phases\phase-$PhaseNumber"
     
     # Validate that phase specification exists
     if (-not (Test-Path "$phaseDir\spec.md")) {
-        Write-ColorOutput "❌ Phase specification not found at $phaseDir\spec.md" "Red"
-        Write-ColorOutput "💡 Run: .\manage-phases.ps1 -Action create-phase -PhaseNumber $PhaseNumber" "Yellow"
+        Write-ColorOutput "Phase specification not found at $phaseDir\spec.md" "Red"
+        Write-ColorOutput "Run: .\manage-phases.ps1 -Action create-phase -PhaseNumber $PhaseNumber" "Yellow"
         return
     }
 
-    $phasePlanContent = @"
-# Phase $PhaseNumber Implementation Plan
+    # Create comprehensive phase specification using hybrid approach - rs 
+    # Build header and footer dynamically
+    $PhasePlanHeader = @()
+    $PhasePlanHeader += "# Phase $PhaseNumber Implementation Plan"
+    $PhasePlanHeader += "## Phase Overview"
+    $PhasePlanHeader += ""
+
+    $PhasePlanFooter = @()
+    $PhasePlanFooter += "**Created**: $(Get-Date -Format 'yyyy-MM-dd')"
+    $PhasePlanFooter += "**Last Updated**: $(Get-Date -Format 'yyyy-MM-dd') "
+    $PhasePlanFooter += "**Approved By**: [Product Owner, Tech Lead, Team]"
+    $PhasePlanFooter += "**Next Review**: [Weekly during execution]"
+
+    # Read the static template content (everything after the header)
+    $phasePlanTemplatePath = Join-Path $PSScriptRoot 'templates' 'phases-phaseplan.template.md'
+    if (-not (Test-Path $phasePlanTemplatePath)) {
+        Write-ColorOutput "[ERROR] Phase plan template file not found: $phasePlanTemplatePath" "Red"
+        return
+    }
+    $phasePlanBody = Get-Content $phasePlanTemplatePath -Raw
+    $phasePlanBodyLines = $phasePlanBody -split "`r?`n"
+    $headerEndIndex = ($phasePlanBodyLines | Select-String -Pattern '^## Implementation Strategy' -SimpleMatch).LineNumber
+    if ($headerEndIndex) {
+        $phasePlanBody = ($phasePlanBodyLines[$headerEndIndex-1..($phasePlanBodyLines.Length-1)] -join "`n")
+    } else {
+        # Fallback: just use the whole template if the marker is not found
+    }
+    # Combine the dynamic header, static body, and footer
+    $phasePlanContent = ($PhasePlanHeader -join "`n") + "`n" + $phasePlanBody + "`n" + ($PhasePlanFooter -join "`n")
 
-## Phase Overview
-**Current Status**: 📋 Planning
-**Planned Start Date**: [To be set when planning is complete]
-**Target End Date**: [To be set based on team capacity and complexity]
-**Team Size**: [Number of team members assigned]
-**Total Effort Estimate**: [Story points or hours estimated]
-
-## Implementation Strategy
-
-### Development Approach
-- **Methodology**: Agile development with 1-week sprint cycles
-- **Team Structure**: Cross-functional team with clear roles and responsibilities
-- **Quality Gates**: Code review, testing, and stakeholder approval at each milestone
-- **Risk Management**: Weekly risk assessment and mitigation planning
-- **Communication**: Daily standups, weekly stakeholder updates, bi-weekly demos
-
-### Team Roles & Responsibilities
-- **Product Owner**: Requirements clarification, acceptance testing, stakeholder communication
-- **Tech Lead**: Architecture decisions, code review, technical risk management
-- **Senior Developer**: Complex feature implementation, mentoring, technical guidance
-- **Developer**: Feature implementation, unit testing, code review participation
-- **Designer**: UI/UX design, design system maintenance, user testing
-- **QA Engineer**: Test planning, automated testing, quality assurance
-
-### Quality Standards
-- **Code Review**: All code reviewed by at least one other team member
-- **Testing**: Minimum 80% test coverage for business logic
-- **Performance**: All features meet performance requirements before deployment
-- **Accessibility**: WCAG 2.1 AA compliance verified for all user-facing features
-- **Security**: Security review completed for all new endpoints and features
-
-## Implementation Phases & Milestones
-
-### Milestone 1: Foundation & Setup
-**Duration**: Week 1
-**Goal**: Establish technical foundation and development environment
-**Team Focus**: Full team collaboration on setup
-
-#### Tasks & Deliverables
-- [ ] **DEV-001**: Development environment setup and configuration
-  - **Owner**: DevOps Engineer + Tech Lead
-  - **Effort**: 8 hours
-  - **Deliverable**: All developers can run project locally
-  - **Acceptance Criteria**:
-    - [ ] Local development environment runs without errors
-    - [ ] Database connections and migrations work
-    - [ ] Hot reloading and debugging functional
-    - [ ] Environment variables properly configured
-
-- [ ] **ARCH-001**: Database schema design and implementation
-  - **Owner**: Tech Lead + Senior Developer
-  - **Effort**: 12 hours
-  - **Deliverable**: Database migrations and models
-  - **Acceptance Criteria**:
-    - [ ] All required tables created with proper relationships
-    - [ ] Indexes and constraints implemented
-    - [ ] Migration scripts tested and documented
-    - [ ] Rollback procedures verified
-
-- [ ] **UI-001**: Design system integration and base components
-  - **Owner**: Designer + Frontend Developer
-  - **Effort**: 16 hours
-  - **Deliverable**: Reusable UI component library
-  - **Acceptance Criteria**:
-    - [ ] Design tokens properly integrated
-    - [ ] Base components (Button, Input, Form) implemented
-    - [ ] Storybook setup with component documentation
-    - [ ] Responsive behavior verified
-
-#### Milestone 1 Success Criteria
-- [ ] All team members productive in development environment
-- [ ] Database schema supports all Phase requirements
-- [ ] UI component foundation ready for feature development
-- [ ] CI/CD pipeline functional and tested
-
----
-
-### Milestone 2: Core Authentication System
-**Duration**: Weeks 2-3
-**Goal**: Implement complete user authentication and account management
-**Team Focus**: Backend + Frontend collaboration
-
-#### Tasks & Deliverables
-- [ ] **AUTH-001**: User registration API and validation
-  - **Owner**: Backend Developer
-  - **Effort**: 12 hours
-  - **Dependencies**: ARCH-001
-  - **Deliverable**: Registration endpoint with validation
-  - **Acceptance Criteria**:
-    - [ ] User registration endpoint accepts email/password
-    - [ ] Email validation and duplicate checking
-    - [ ] Password strength requirements enforced
-    - [ ] Account activation email sent
-    - [ ] Proper error handling and responses
-
-- [ ] **AUTH-002**: User login/logout API and session management
-  - **Owner**: Backend Developer
-  - **Effort**: 10 hours
-  - **Dependencies**: AUTH-001
-  - **Deliverable**: Authentication endpoints and middleware
-  - **Acceptance Criteria**:
-    - [ ] Login endpoint authenticates users
-    - [ ] JWT tokens issued with appropriate expiration
-    - [ ] Logout endpoint invalidates tokens
-    - [ ] Session middleware protects protected routes
-    - [ ] Rate limiting implemented for login attempts
-
-- [ ] **AUTH-003**: Password reset functionality
-  - **Owner**: Backend Developer
-  - **Effort**: 8 hours
-  - **Dependencies**: AUTH-001
-  - **Deliverable**: Password reset flow
-  - **Acceptance Criteria**:
-    - [ ] Password reset request sends secure email
-    - [ ] Reset tokens expire appropriately
-    - [ ] New password validation and update
-    - [ ] User notification of password change
-    - [ ] Security logging of password reset events
-
-- [ ] **AUTH-004**: User registration UI
-  - **Owner**: Frontend Developer
-  - **Effort**: 14 hours
-  - **Dependencies**: UI-001, AUTH-001
-  - **Deliverable**: Registration form and flow
-  - **Acceptance Criteria**:
-    - [ ] Registration form with proper validation
-    - [ ] Real-time form validation feedback
-    - [ ] Error handling and user messaging
-    - [ ] Email verification confirmation screen
-    - [ ] Responsive design across all devices
-
-- [ ] **AUTH-005**: User login UI and navigation
-  - **Owner**: Frontend Developer
-  - **Effort**: 12 hours
-  - **Dependencies**: UI-001, AUTH-002
-  - **Deliverable**: Login form and authenticated navigation
-  - **Acceptance Criteria**:
-    - [ ] Login form with validation and error handling
-    - [ ] Remember me functionality
-    - [ ] Navigation updates based on authentication state
-    - [ ] Proper routing for authenticated/unauthenticated users
-    - [ ] Loading states during authentication
-
-- [ ] **AUTH-006**: User profile management
-  - **Owner**: Frontend Developer + Backend Developer
-  - **Effort**: 16 hours
-  - **Dependencies**: AUTH-002
-  - **Deliverable**: User profile viewing and editing
-  - **Acceptance Criteria**:
-    - [ ] Users can view their profile information
-    - [ ] Users can update name, email, password
-    - [ ] Email change requires verification
-    - [ ] Profile picture upload and display
-    - [ ] Account deletion functionality
-
-#### Milestone 2 Success Criteria
-- [ ] Users can register, login, and manage accounts
-- [ ] All authentication flows work correctly
-- [ ] Security requirements met and tested
-- [ ] UI matches design specifications
-- [ ] Mobile experience optimized
-
----
-
-### Milestone 3: Contact Management System
-**Duration**: Weeks 3-4
-**Goal**: Implement comprehensive contact management functionality
-**Team Focus**: Feature development with parallel backend/frontend work
-
-#### Tasks & Deliverables
-- [ ] **CONTACT-001**: Contact data model and API
-  - **Owner**: Backend Developer
-  - **Effort**: 14 hours
-  - **Dependencies**: ARCH-001
-  - **Deliverable**: Contact CRUD API
-  - **Acceptance Criteria**:
-    - [ ] Contact model with required fields
-    - [ ] Create, read, update, delete endpoints
-    - [ ] Search and filtering functionality
-    - [ ] Pagination for large contact lists
-    - [ ] User-based contact isolation
-
-- [ ] **CONTACT-002**: Contact list UI with search and filtering
-  - **Owner**: Frontend Developer
-  - **Effort**: 18 hours
-  - **Dependencies**: UI-001, CONTACT-001
-  - **Deliverable**: Contact list page with functionality
-  - **Acceptance Criteria**:
-    - [ ] Paginated contact list display
-    - [ ] Search by name, email, phone
-    - [ ] Filter by categories or tags
-    - [ ] Sort by various criteria
-    - [ ] Responsive grid/list view options
-
-- [ ] **CONTACT-003**: Add/Edit contact form and functionality
-  - **Owner**: Frontend Developer
-  - **Effort**: 16 hours
-  - **Dependencies**: UI-001, CONTACT-001
-  - **Deliverable**: Contact creation and editing forms
-  - **Acceptance Criteria**:
-    - [ ] Form with all required contact fields
-    - [ ] Field validation and error handling
-    - [ ] Image/avatar upload functionality
-    - [ ] Success/error feedback to users
-    - [ ] Mobile-optimized form experience
-
-- [ ] **CONTACT-004**: Contact import functionality
-  - **Owner**: Backend Developer + Frontend Developer
-  - **Effort**: 20 hours
-  - **Dependencies**: CONTACT-001
-  - **Deliverable**: CSV and external contact import
-  - **Acceptance Criteria**:
-    - [ ] CSV file upload and parsing
-    - [ ] Field mapping interface for imports
-    - [ ] Duplicate detection and handling
-    - [ ] Bulk import progress indication
-    - [ ] Import error reporting and handling
-
-- [ ] **CONTACT-005**: Contact categories and tagging
-  - **Owner**: Backend Developer + Frontend Developer
-  - **Effort**: 14 hours
-  - **Dependencies**: CONTACT-001
-  - **Deliverable**: Contact organization features
-  - **Acceptance Criteria**:
-    - [ ] Contact categories/tags management
-    - [ ] Assign categories to contacts
-    - [ ] Filter contacts by category
-    - [ ] Bulk category assignment
-    - [ ] Category-based contact organization
-
-#### Milestone 3 Success Criteria
-- [ ] Complete contact management system functional
-- [ ] Users can efficiently manage their contact lists
-- [ ] Search and filtering perform well with large datasets
-- [ ] Import functionality works with common formats
-- [ ] Mobile experience optimized for contact management
-
----
-
-### Milestone 4: Task Management System
-**Duration**: Weeks 4-6
-**Goal**: Implement comprehensive task management with contact integration
-**Team Focus**: Complex feature development requiring tight coordination
-
-#### Tasks & Deliverables
-- [ ] **TASK-001**: Task data model and relationships
-  - **Owner**: Backend Developer
-  - **Effort**: 16 hours
-  - **Dependencies**: ARCH-001, CONTACT-001
-  - **Deliverable**: Task API with contact relationships
-  - **Acceptance Criteria**:
-    - [ ] Task model with all required fields
-    - [ ] Task-contact relationship management
-    - [ ] Task categories and priority levels
-    - [ ] Due date and reminder functionality
-    - [ ] Task status and completion tracking
-
-- [ ] **TASK-002**: Task CRUD API with advanced features
-  - **Owner**: Backend Developer
-  - **Effort**: 18 hours
-  - **Dependencies**: TASK-001
-  - **Deliverable**: Complete task management API
-  - **Acceptance Criteria**:
-    - [ ] Create, read, update, delete task endpoints
-    - [ ] Task search and filtering capabilities
-    - [ ] Bulk task operations (complete, delete, update)
-    - [ ] Task sorting by various criteria
-    - [ ] Performance optimized for large task lists
-
-- [ ] **TASK-003**: Task list UI with filtering and sorting
-  - **Owner**: Frontend Developer
-  - **Effort**: 20 hours
-  - **Dependencies**: UI-001, TASK-002
-  - **Deliverable**: Task list interface
-  - **Acceptance Criteria**:
-    - [ ] Paginated task list with multiple views
-    - [ ] Filter by status, priority, due date, contact
-    - [ ] Sort by creation, due date, priority
-    - [ ] Bulk selection and operations
-    - [ ] Responsive design for mobile devices
-
-- [ ] **TASK-004**: Task creation and editing forms
-  - **Owner**: Frontend Developer
-  - **Effort**: 18 hours
-  - **Dependencies**: UI-001, TASK-002
-  - **Deliverable**: Task form interfaces
-  - **Acceptance Criteria**:
-    - [ ] Task creation form with all fields
-    - [ ] Contact selection and linking
-    - [ ] Due date picker and reminder setup
-    - [ ] Priority and category selection
-    - [ ] Rich text description editing
-
-- [ ] **TASK-005**: Task-contact integration features
-  - **Owner**: Frontend Developer + Backend Developer
-  - **Effort**: 16 hours
-  - **Dependencies**: TASK-002, CONTACT-001
-  - **Deliverable**: Integrated task-contact workflows
-  - **Acceptance Criteria**:
-    - [ ] View tasks associated with specific contacts
-    - [ ] Create tasks from contact views
-    - [ ] Contact information available in task views
-    - [ ] Task completion updates contact interaction history
-    - [ ] Seamless navigation between tasks and contacts
-
-- [ ] **TASK-006**: Task completion and progress tracking
-  - **Owner**: Frontend Developer + Backend Developer
-  - **Effort**: 12 hours
-  - **Dependencies**: TASK-002
-  - **Deliverable**: Task completion workflows
-  - **Acceptance Criteria**:
-    - [ ] Mark tasks as complete with timestamp
-    - [ ] Track task completion statistics
-    - [ ] Completed task archiving and retrieval
-    - [ ] Progress visualization and reports
-    - [ ] Completion notifications and feedback
-
-#### Milestone 4 Success Criteria
-- [ ] Complete task management system operational
-- [ ] Task-contact integration working seamlessly
-- [ ] Users can efficiently create, manage, and complete tasks
-- [ ] Performance acceptable with realistic data volumes
-- [ ] Mobile task management experience optimized
-
----
-
-### Milestone 5: Integration, Testing & Polish
-**Duration**: Week 6-7
-**Goal**: Ensure all features work together seamlessly and meet quality standards
-**Team Focus**: Quality assurance, integration testing, performance optimization
-
-#### Tasks & Deliverables
-- [ ] **INT-001**: End-to-end integration testing
-  - **Owner**: QA Engineer + Full Team
-  - **Effort**: 24 hours
-  - **Dependencies**: All previous milestones
-  - **Deliverable**: Comprehensive test suite and results
-  - **Acceptance Criteria**:
-    - [ ] All user workflows tested end-to-end
-    - [ ] Cross-feature integration verified
-    - [ ] Error handling tested in all scenarios
-    - [ ] Data integrity confirmed across features
-    - [ ] Performance benchmarks met
-
-- [ ] **PERF-001**: Performance optimization and monitoring
-  - **Owner**: Tech Lead + DevOps Engineer
-  - **Effort**: 16 hours
-  - **Dependencies**: All features implemented
-  - **Deliverable**: Performance-optimized application
-  - **Acceptance Criteria**:
-    - [ ] Page load times under 2 seconds
-    - [ ] API response times under 500ms
-    - [ ] Database queries optimized
-    - [ ] Frontend bundle size optimized
-    - [ ] Performance monitoring implemented
-
-- [ ] **UX-001**: User experience refinement
-  - **Owner**: Designer + Frontend Developer
-  - **Effort**: 20 hours
-  - **Dependencies**: All UI implemented
-  - **Deliverable**: Polished user experience
-  - **Acceptance Criteria**:
-    - [ ] UI/UX review and refinement completed
-    - [ ] Accessibility requirements verified
-    - [ ] Mobile experience optimized
-    - [ ] User feedback incorporated
-    - [ ] Loading states and error handling polished
-
-- [ ] **SEC-001**: Security review and hardening
-  - **Owner**: Tech Lead + Security Consultant
-  - **Effort**: 12 hours
-  - **Dependencies**: All features implemented
-  - **Deliverable**: Security-validated application
-  - **Acceptance Criteria**:
-    - [ ] Security audit completed
-    - [ ] Vulnerability scanning performed
-    - [ ] Input validation verified
-    - [ ] Authentication security confirmed
-    - [ ] Data protection measures validated
-
-- [ ] **DOC-001**: Documentation completion
-  - **Owner**: Tech Lead + Team
-  - **Effort**: 16 hours
-  - **Dependencies**: All features implemented
-  - **Deliverable**: Complete documentation set
-  - **Acceptance Criteria**:
-    - [ ] API documentation complete and current
-    - [ ] User documentation written
-    - [ ] Technical documentation updated
-    - [ ] Deployment procedures documented
-    - [ ] Troubleshooting guides created
-
-#### Milestone 5 Success Criteria
-- [ ] All features integrated and working together
-- [ ] Performance requirements met
-- [ ] Security standards achieved
-- [ ] Documentation complete and accessible
-- [ ] Application ready for production deployment
-
----
-
-### Milestone 6: Deployment & Launch
-**Duration**: Week 7-8
-**Goal**: Deploy to production and successfully launch Phase 1
-**Team Focus**: Deployment, monitoring, and launch support
-
-#### Tasks & Deliverables
-- [ ] **DEPLOY-001**: Production environment setup
-  - **Owner**: DevOps Engineer
-  - **Effort**: 16 hours
-  - **Dependencies**: All development complete
-  - **Deliverable**: Production-ready environment
-  - **Acceptance Criteria**:
-    - [ ] Production servers configured and secured
-    - [ ] Database deployed with migrations
-    - [ ] SSL certificates and domain setup
-    - [ ] Load balancing and scaling configured
-    - [ ] Backup and recovery procedures tested
-
-- [ ] **DEPLOY-002**: Monitoring and alerting configuration
-  - **Owner**: DevOps Engineer + Tech Lead
-  - **Effort**: 12 hours
-  - **Dependencies**: DEPLOY-001
-  - **Deliverable**: Comprehensive monitoring system
-  - **Acceptance Criteria**:
-    - [ ] Application performance monitoring
-    - [ ] Error tracking and alerting
-    - [ ] Uptime monitoring and notifications
-    - [ ] Database performance monitoring
-    - [ ] User analytics and behavior tracking
-
-- [ ] **LAUNCH-001**: Launch preparation and execution
-  - **Owner**: Product Owner + Full Team
-  - **Effort**: 20 hours
-  - **Dependencies**: DEPLOY-002
-  - **Deliverable**: Successful product launch
-  - **Acceptance Criteria**:
-    - [ ] Launch checklist completed
-    - [ ] User onboarding materials ready
-    - [ ] Support documentation available
-    - [ ] Team trained on support procedures
-    - [ ] Launch communications executed
-
-- [ ] **SUPPORT-001**: Post-launch monitoring and support
-  - **Owner**: Full Team
-  - **Effort**: 24 hours (first week)
-  - **Dependencies**: LAUNCH-001
-  - **Deliverable**: Stable production operation
-  - **Acceptance Criteria**:
-    - [ ] 24/7 monitoring during launch week
-    - [ ] User support processes operational
-    - [ ] Issue tracking and resolution
-    - [ ] Performance monitoring and optimization
-    - [ ] User feedback collection and analysis
-
-#### Milestone 6 Success Criteria
-- [ ] Application running stably in production
-- [ ] Monitoring and alerting functional
-- [ ] User onboarding and support operational
-- [ ] Launch metrics targets achieved
-- [ ] Team ready for ongoing operation and Phase 2 planning
-
-## Resource Planning & Allocation
-
-### Team Composition & Availability
-- **Product Owner**: 20 hours/week (requirements, testing, stakeholder communication)
-- **Tech Lead**: 40 hours/week (architecture, code review, technical decisions)
-- **Senior Frontend Developer**: 40 hours/week (UI implementation, component library)
-- **Backend Developer**: 40 hours/week (API development, database design)
-- **Designer**: 15 hours/week (UI design, user experience, design system)
-- **DevOps Engineer**: 10 hours/week (infrastructure, deployment, monitoring)
-- **QA Engineer**: 20 hours/week (testing, quality assurance, user acceptance)
-
-### Technology Stack & Tools
-- **Frontend**: React 18+, TypeScript, Tailwind CSS, Vite
-- **Backend**: Node.js, Express, TypeScript, PostgreSQL
-- **Development**: VSCode, Git, npm/yarn, Docker
-- **Testing**: Jest, React Testing Library, Cypress
-- **Deployment**: Docker, AWS/Azure/GCP, CI/CD pipeline
-- **Monitoring**: Application monitoring, error tracking, analytics
-
-### Budget & Resource Requirements
-- **Development Team**: [Calculate based on team composition and duration]
-- **Infrastructure**: [Cloud hosting, database, CDN, monitoring services]
-- **Tools & Services**: [Development tools, third-party services, licenses]
-- **Contingency**: [10-20% buffer for unexpected requirements or delays]
-
-## Risk Management Strategy
-
-### High-Priority Risks & Mitigation
-
-#### Risk: Database Performance with Large Datasets
-- **Impact**: High - Could affect user experience and system scalability
-- **Probability**: Medium - Depends on user adoption and data growth
-- **Mitigation**: 
-  - Early load testing with realistic data volumes
-  - Database query optimization and indexing
-  - Caching strategy implementation
-  - Database performance monitoring
-- **Contingency**: Database schema optimization, caching layer implementation
-- **Owner**: Tech Lead
-- **Monitor**: Weekly performance testing and monitoring
-
-#### Risk: Third-party Service Integration Failures
-- **Impact**: Medium - Could delay features dependent on external services
-- **Probability**: Medium - External services may have downtime or API changes
-- **Mitigation**:
-  - Fallback mechanisms for critical integrations
-  - Regular testing of external service connections
-  - Service-level agreements and support contacts
-  - Error handling and user communication
-- **Contingency**: Alternative service providers or simplified functionality
-- **Owner**: Backend Developer
-- **Monitor**: Daily integration health checks
-
-#### Risk: Mobile Responsive Design Complexity
-- **Impact**: Medium - Poor mobile experience could reduce user adoption
-- **Probability**: Medium - Complex UI features may not translate well to mobile
-- **Mitigation**:
-  - Mobile-first development approach
-  - Regular testing on actual mobile devices
-  - Progressive enhancement strategy
-  - User testing on mobile platforms
-- **Contingency**: Simplified mobile interface or dedicated mobile app
-- **Owner**: Designer + Frontend Developer
-- **Monitor**: Weekly mobile experience testing
-
-#### Risk: Security Vulnerabilities
-- **Impact**: High - Could compromise user data and trust
-- **Probability**: Low - With proper development practices
-- **Mitigation**:
-  - Regular security code reviews
-  - Automated vulnerability scanning
-  - Secure coding standards and training
-  - External security audit before launch
-- **Contingency**: Immediate patch deployment and user notification procedures
-- **Owner**: Tech Lead + Security Consultant
-- **Monitor**: Continuous automated scanning and monthly reviews
-
-### Risk Monitoring & Escalation
-- **Daily**: Team lead monitors technical risks during standup meetings
-- **Weekly**: Risk register review in team meetings
-- **Bi-weekly**: Stakeholder risk briefing and escalation as needed
-- **Monthly**: Comprehensive risk assessment and mitigation plan updates
-
-## Success Measurement & KPIs
-
-### Phase Success Criteria
-This phase will be considered successful when:
-- All functional requirements implemented and tested
-- User acceptance criteria met for all features
-- Performance benchmarks achieved (page loads <2s, API responses <500ms)
-- Security requirements validated through audit
-- User onboarding success rate >70%
-- System uptime >99.9% during first month
-
-### Key Performance Indicators
-
-#### Development Metrics
-- **Velocity**: Story points completed per sprint
-- **Quality**: Defect rate and time to resolution
-- **Efficiency**: Code review time and deployment frequency
-- **Technical Debt**: Code quality metrics and refactoring needs
-
-#### User Engagement Metrics
-- **Adoption Rate**: Percentage of registered users who complete onboarding
-- **Feature Usage**: Percentage of users utilizing core features (contacts, tasks)
-- **Session Duration**: Average time users spend in the application
-- **Return Rate**: Percentage of users who return within 7 days of registration
-
-#### Technical Performance Metrics
-- **Response Time**: Average API response times across all endpoints
-- **Page Load Speed**: Average page load times across different pages
-- **Error Rates**: Percentage of requests resulting in errors
-- **Uptime**: System availability percentage
-
-#### Business Metrics
-- **User Registration**: Number of new user registrations per week
-- **User Retention**: Percentage of users active after 30 days
-- **Support Load**: Number of support tickets per active user
-- **User Satisfaction**: User feedback scores and ratings
-
-### Measurement Tools & Reporting
-- **Analytics**: Google Analytics or similar for user behavior
-- **Performance**: Application performance monitoring (APM) tools
-- **Uptime**: Uptime monitoring and alerting services
-- **User Feedback**: In-app feedback collection and user surveys
-- **Business Intelligence**: Dashboard for key metrics and trends
-
-## Communication & Reporting Plan
-
-### Daily Communication
-- **Team Standup**: 15-minute daily sync on progress, blockers, and plans
-- **Slack Updates**: Continuous communication and quick issue resolution
-- **Code Reviews**: Ongoing peer review and knowledge sharing
-
-### Weekly Communication
-- **Sprint Planning**: Plan upcoming week's work and priorities
-- **Stakeholder Update**: Progress report to product and business stakeholders
-- **Risk Review**: Assess risks and adjust mitigation strategies
-- **Metrics Review**: Analyze KPIs and performance indicators
-
-### Bi-weekly Communication
-- **Sprint Demo**: Demonstration of completed features to stakeholders
-- **Retrospective**: Team reflection on process improvements
-- **User Research**: User testing results and feedback incorporation
-
-### Monthly Communication
-- **Business Review**: Comprehensive progress and metrics review
-- **Budget Review**: Resource utilization and budget status
-- **Roadmap Update**: Adjustments to overall product roadmap
-
-## Phase Completion & Transition
-
-### Phase Completion Checklist
-- [ ] All user stories completed and accepted
-- [ ] All acceptance criteria verified
-- [ ] Performance requirements met
-- [ ] Security audit completed and passed
-- [ ] Documentation complete and reviewed
-- [ ] Production deployment successful
-- [ ] Monitoring and alerting operational
-- [ ] User feedback collected and analyzed
-- [ ] Success metrics achieved or on trajectory
-- [ ] Technical debt documented and prioritized
-
-### Knowledge Transfer & Documentation
-- [ ] Technical architecture documented
-- [ ] API documentation complete and current
-- [ ] Deployment procedures documented and tested
-- [ ] Troubleshooting guides created
-- [ ] User manuals and help documentation
-- [ ] Team knowledge sharing sessions completed
-
-### Phase 2 Transition Preparation
-- [ ] Phase 2 requirements reviewed and understood
-- [ ] Technical dependencies for Phase 2 satisfied
-- [ ] Team capacity planned for Phase 2
-- [ ] Lessons learned documented and shared
-- [ ] Architecture decisions logged for future reference
-- [ ] User feedback prioritized for Phase 2 planning
-
-### Success Celebration & Team Recognition
-- [ ] Phase completion celebration planned
-- [ ] Individual and team contributions recognized
-- [ ] Lessons learned and improvements identified
-- [ ] Team satisfaction and feedback collected
-- [ ] Process improvements planned for next phase
-
----
-
-**Plan Version**: 1.0
-**Created**: $(Get-Date -Format 'yyyy-MM-dd')
-**Last Updated**: $(Get-Date -Format 'yyyy-MM-dd')  
-**Approved By**: [Product Owner, Tech Lead, Team]
-**Next Review**: [Weekly during execution]
-"@
 
     try {
         $phasePlanContent | Out-File -FilePath "$phaseDir\plan.md" -Encoding UTF8
-        Write-ColorOutput "✅ Created $phaseDir\plan.md" "Green"
+        Write-ColorOutput "Created $phaseDir\plan.md" "Green"
     }
     catch {
-        Write-ColorOutput "❌ Failed to create plan.md: $($_.Exception.Message)" "Red"
+        Write-ColorOutput "Failed to create plan.md: $($_.Exception.Message)" "Red"
         return
     }
 
-    Write-ColorOutput "✅ Phase $PhaseNumber implementation plan created successfully!" "Green"
-    Write-ColorOutput "" "White"
-    Write-ColorOutput "📝 Next steps:" "Yellow"
+    Write-ColorOutput "Phase $PhaseNumber implementation plan created successfully!" "Green"
+    Write-ColorOutput "---" "White"
+    Write-ColorOutput "Next steps:" "Yellow"
     Write-ColorOutput "   1. Review and adjust timeline in $phaseDir\plan.md" "White"
     Write-ColorOutput "   2. Assign team members to specific tasks" "White"
     Write-ColorOutput "   3. Run: .\manage-phases.ps1 -Action start-phase -PhaseNumber $PhaseNumber" "White"
@@ -1583,7 +317,7 @@ function Start-PhaseExecution {
         [string]$PhaseNumber
     )
     
-    Write-ColorOutput "🚀 Starting Phase $PhaseNumber execution..." "Cyan"
+    Write-ColorOutput "Starting Phase $PhaseNumber execution..." "Cyan"
     
     $phaseDir = "docs\phases\phase-$PhaseNumber"
     
@@ -1601,15 +335,15 @@ function Start-PhaseExecution {
     }
     
     if ($missingFiles.Count -gt 0) {
-        Write-ColorOutput "❌ Missing required files:" "Red"
+        Write-ColorOutput "Missing required files:" "Red"
         foreach ($file in $missingFiles) {
             Write-ColorOutput "   • $file" "Red"
         }
-        Write-ColorOutput "💡 Complete specification and planning first" "Yellow"
+        Write-ColorOutput "Complete specification and planning first" "Yellow"
         return
     }
 
-    Write-ColorOutput "📋 Generating detailed task breakdown..." "Yellow"
+    Write-ColorOutput "Generating detailed task breakdown..." "Yellow"
     
     $tasksContent = @"
 # Phase $PhaseNumber - Development Tasks & Sprint Planning
@@ -2701,17 +1435,17 @@ Upon successful completion of Phase 1:
 
     try {
         $tasksContent | Out-File -FilePath "$phaseDir\tasks.md" -Encoding UTF8
-        Write-ColorOutput "✅ Created $phaseDir\tasks.md" "Green"
+        Write-ColorOutput "Created $phaseDir\tasks.md" "Green"
     }
     catch {
-        Write-ColorOutput "❌ Failed to create tasks.md: $($_.Exception.Message)" "Red"
+        Write-ColorOutput "Failed to create tasks.md: $($_.Exception.Message)" "Red"
         return
     }
 
-    Write-ColorOutput "✅ Phase $PhaseNumber execution started successfully!" "Green"
+    Write-ColorOutput "Phase $PhaseNumber execution started successfully!" "Green"
     Write-ColorOutput "" "White"
-    Write-ColorOutput "📋 Task breakdown created with 8 detailed sprints" "White"
-    Write-ColorOutput "📝 Next steps:" "Yellow"
+    Write-ColorOutput "Task breakdown created with 8 detailed sprints" "White"
+    Write-ColorOutput "Next steps:" "Yellow"
     Write-ColorOutput "   1. Review and customize sprint tasks in $phaseDir\tasks.md" "White"
     Write-ColorOutput "   2. Assign team members to specific tasks" "White"
     Write-ColorOutput "   3. Begin Sprint 1 with team planning meeting" "White"
@@ -2725,7 +1459,7 @@ function Complete-Phase {
         [string]$PhaseNumber
     )
     
-    Write-ColorOutput "🎯 Completing Phase $PhaseNumber..." "Cyan"
+    Write-ColorOutput "Completing Phase $PhaseNumber..." "Cyan"
     
     $phaseDir = "docs\phases\phase-$PhaseNumber"
     
@@ -2744,15 +1478,15 @@ function Complete-Phase {
     }
     
     if ($missingFiles.Count -gt 0) {
-        Write-ColorOutput "❌ Missing required phase files:" "Red"
+        Write-ColorOutput "Missing required phase files:" "Red"
         foreach ($file in $missingFiles) {
             Write-ColorOutput "   • $file" "Red"
         }
-        Write-ColorOutput "💡 Complete phase development first" "Yellow"
+        Write-ColorOutput "Complete phase development first" "Yellow"
         return
     }
 
-    Write-ColorOutput "📊 Generating Phase $PhaseNumber completion report..." "Yellow"
+    Write-ColorOutput "Generating Phase $PhaseNumber completion report..." "Yellow"
     
     $completionReportContent = @"
 # Phase $PhaseNumber Completion Report
@@ -3232,19 +1966,19 @@ function Complete-Phase {
 
     try {
         $completionReportContent | Out-File -FilePath "$phaseDir\completion-report.md" -Encoding UTF8
-        Write-ColorOutput "✅ Created $phaseDir\completion-report.md" "Green"
+        Write-ColorOutput "Created $phaseDir\completion-report.md" "Green"
     }
     catch {
-        Write-ColorOutput "❌ Failed to create completion-report.md: $($_.Exception.Message)" "Red"
+        Write-ColorOutput "Failed to create completion-report.md: $($_.Exception.Message)" "Red"
         return
     }
 
-    Write-ColorOutput "✅ Phase $PhaseNumber completion report generated!" "Green"
-    Write-ColorOutput "" "White"
-    Write-ColorOutput "🎉 Phase $PhaseNumber officially completed!" "Green"
-    Write-ColorOutput "" "White"
-    Write-ColorOutput "📊 Completion report created at $phaseDir\completion-report.md" "White"
-    Write-ColorOutput "📝 Next steps:" "Yellow"
+    Write-ColorOutput "Phase $PhaseNumber completion report generated!" "Green"
+    Write-ColorOutput "---" "White"
+    Write-ColorOutput "Phase $PhaseNumber officially completed!" "Green"
+    Write-ColorOutput "---" "White"
+    Write-ColorOutput "Completion report created at $phaseDir\completion-report.md" "White"
+    Write-ColorOutput "Next steps:" "Yellow"
     Write-ColorOutput "   1. Fill out the completion report with actual results and metrics" "White"
     Write-ColorOutput "   2. Conduct team retrospective and capture lessons learned" "White"
     Write-ColorOutput "   3. Plan Phase 2 based on Phase 1 learnings and user feedback" "White"
@@ -3252,13 +1986,13 @@ function Complete-Phase {
 }
 
 function Show-PhaseStatus {
-    Write-ColorOutput "📊 Phase Development Status Report" "Cyan"
+    Write-ColorOutput "Phase Development Status Report" "Cyan"
     Write-ColorOutput "=================================" "Cyan"
 
     # Check if phases directory exists
     if (-not (Test-Path "docs\phases")) {
-        Write-ColorOutput "❌ No phase management setup found." "Red"
-        Write-ColorOutput "💡 Run: .\manage-phases.ps1 -Action init-roadmap" "Yellow"
+        Write-ColorOutput "No phase management setup found." "Red"
+        Write-ColorOutput "Run: .\manage-phases.ps1 -Action init-roadmap" "Yellow"
         return
     }
 
@@ -3266,13 +2000,13 @@ function Show-PhaseStatus {
     $phases = Get-ChildItem "docs\phases" -Directory | Sort-Object { [int]($_.Name -replace "phase-", "") }
 
     if ($phases.Count -eq 0) {
-        Write-ColorOutput "📋 No phases created yet." "Yellow"
-        Write-ColorOutput "💡 Run: .\manage-phases.ps1 -Action create-phase -PhaseNumber 1" "Yellow"
+        Write-ColorOutput "No phases created yet." "Yellow"
+        Write-ColorOutput "Run: .\manage-phases.ps1 -Action create-phase -PhaseNumber 1" "Yellow"
         return
     }
 
-    Write-ColorOutput "📈 Found $($phases.Count) phase(s) in development:" "White"
-    Write-ColorOutput "" "White"
+    Write-ColorOutput "Found $($phases.Count) phase(s) in development:" "White"
+    Write-ColorOutput "---" "White"
 
     foreach ($phase in $phases) {
         $phaseNumber = $phase.Name -replace "phase-", ""
@@ -3283,15 +2017,15 @@ function Show-PhaseStatus {
 
         # Determine phase status
         $status = if ($hasCompletion) { 
-            "✅ Completed" 
+            "Completed" 
         } elseif ($hasTasks) { 
-            "🚀 In Progress" 
+            "In Progress" 
         } elseif ($hasPlan) { 
-            "📋 Planned" 
+            "Planned" 
         } elseif ($hasSpec) { 
-            "📝 Specified" 
+            "Specified" 
         } else { 
-            "❓ Incomplete Setup" 
+            "Incomplete Setup" 
         }
 
         # Determine status color
@@ -3304,10 +2038,10 @@ function Show-PhaseStatus {
         }
 
         Write-ColorOutput "Phase $phaseNumber : $status" $statusColor
-        Write-ColorOutput "  📋 Specification: $(if ($hasSpec) { '✅ Complete' } else { '❌ Missing' })" "White"
-        Write-ColorOutput "  📊 Plan: $(if ($hasPlan) { '✅ Complete' } else { '❌ Missing' })" "White"
-        Write-ColorOutput "  📝 Tasks: $(if ($hasTasks) { '✅ Complete' } else { '❌ Missing' })" "White"
-        Write-ColorOutput "  🎯 Completion: $(if ($hasCompletion) { '✅ Complete' } else { '❌ Missing' })" "White"
+        Write-ColorOutput "  Specification: $(if ($hasSpec) { '✅ Complete' } else { '❌ Missing' })" "White"
+        Write-ColorOutput "  Plan: $(if ($hasPlan) { '✅ Complete' } else { '❌ Missing' })" "White"
+        Write-ColorOutput "  Tasks: $(if ($hasTasks) { '✅ Complete' } else { '❌ Missing' })" "White"
+        Write-ColorOutput "  Completion: $(if ($hasCompletion) { '✅ Complete' } else { '❌ Missing' })" "White"
         
         # Show additional details if available
         if ($hasSpec) {
@@ -3344,14 +2078,14 @@ function Show-PhaseStatus {
         -not (Test-Path "$($_.FullName)\completion-report.md")
     }).Count
 
-    Write-ColorOutput "📊 DEVELOPMENT PROGRESS SUMMARY" "Cyan"
+    Write-ColorOutput "DEVELOPMENT PROGRESS SUMMARY" "Cyan"
     Write-ColorOutput "===============================" "Cyan"
     Write-ColorOutput "Total Phases: $totalPhases" "White"
-    Write-ColorOutput "✅ Completed: $completedPhases" "Green"
-    Write-ColorOutput "🚀 In Progress: $inProgressPhases" "Yellow"
-    Write-ColorOutput "📋 Planned: $plannedPhases" "Blue"
-    Write-ColorOutput "📝 Specified Only: $specifiedPhases" "Magenta"
-    Write-ColorOutput "❓ Incomplete: $($totalPhases - $completedPhases - $inProgressPhases - $plannedPhases - $specifiedPhases)" "Red"
+    Write-ColorOutput "Completed: $completedPhases" "Green"
+    Write-ColorOutput "In Progress: $inProgressPhases" "Yellow"
+    Write-ColorOutput "Planned: $plannedPhases" "Blue"
+    Write-ColorOutput "Specified Only: $specifiedPhases" "Magenta"
+    Write-ColorOutput "Incomplete: $($totalPhases - $completedPhases - $inProgressPhases - $plannedPhases - $specifiedPhases)" "Red"
 
     # Calculate and show progress percentage
     $completionPercentage = if ($totalPhases -gt 0) { 
@@ -3360,21 +2094,21 @@ function Show-PhaseStatus {
         0 
     }
     
-    Write-ColorOutput "" "White"
-    Write-ColorOutput "📈 Overall Progress: $completionPercentage% Complete" $(if ($completionPercentage -ge 50) { "Green" } elseif ($completionPercentage -ge 25) { "Yellow" } else { "Red" })
+    Write-ColorOutput "---" "White"
+    Write-ColorOutput "Overall Progress: $completionPercentage% Complete" $(if ($completionPercentage -ge 50) { "Green" } elseif ($completionPercentage -ge 25) { "Yellow" } else { "Red" })
 
     # Show roadmap status if available
     if (Test-Path "docs\phase-roadmap.md") {
-        Write-ColorOutput "📋 Phase roadmap available at docs\phase-roadmap.md" "Gray"
+        Write-ColorOutput "Phase roadmap available at docs\phase-roadmap.md" "Gray"
     }
     
     if (Test-Path "docs\product-vision.md") {
-        Write-ColorOutput "🎯 Product vision available at docs\product-vision.md" "Gray"
+        Write-ColorOutput "Product vision available at docs\product-vision.md" "Gray"
     }
 
     # Provide helpful next steps
-    Write-ColorOutput "" "White"
-    Write-ColorOutput "💡 Suggested Next Actions:" "Yellow"
+    Write-ColorOutput "---" "White"
+    Write-ColorOutput "Suggested Next Actions:" "Yellow"
     
     if ($totalPhases -eq 0) {
         Write-ColorOutput "   1. Run: .\manage-phases.ps1 -Action create-phase -PhaseNumber 1" "White"
@@ -3405,7 +2139,7 @@ function Show-PhaseStatus {
         Write-ColorOutput "   2. Consider creating Phase $($totalPhases + 1) specification" "White"
     }
     
-    Write-ColorOutput "   💬 Get status anytime: .\manage-phases.ps1 -Action status" "Gray"
+    Write-ColorOutput "   Get status anytime: .\manage-phases.ps1 -Action status" "Gray"
 }
 
 # ==============================================================================
@@ -3468,7 +2202,7 @@ function Invoke-PhaseAction {
             Show-PhaseStatus 
         }
         default {
-            Write-ColorOutput "❌ Unknown action: $Action" "Red"
+            Write-ColorOutput "Unknown action: $Action" "Red"
             Write-ColorOutput "Valid actions: init-roadmap, create-phase, plan-phase, start-phase, complete-phase, status" "Yellow"
         }
     }
@@ -3479,8 +2213,8 @@ try {
     Invoke-PhaseAction -Action $Action -PhaseNumber $PhaseNumber -PhaseName $PhaseName -Interactive $Interactive
 }
 catch {
-    Write-ColorOutput "❌ Error executing action '$Action': $($_.Exception.Message)" "Red"
-    Write-ColorOutput "💡 Please check the error details above and try again" "Yellow"
+    Write-ColorOutput "Error executing action '$Action': $($_.Exception.Message)" "Red"
+    Write-ColorOutput "Please check the error details above and try again" "Yellow"
     exit 1
 }
 
@@ -3488,5 +2222,5 @@ catch {
 # SCRIPT COMPLETION
 # ==============================================================================
 
-Write-ColorOutput "" "White"
-Write-ColorOutput "✅ manage-phases.ps1 execution completed successfully!" "Green"
+Write-ColorOutput "---" "White"
+Write-ColorOutput "manage-phases.ps1 execution completed successfully!" "Green"

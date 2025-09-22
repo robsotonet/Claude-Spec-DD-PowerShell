@@ -353,7 +353,7 @@ function New-PromptFiles {
     Write-ColorOutput "All Claude Code prompt templates created successfully!" "Green"
     Write-ColorOutput "Created prompt files:" "Cyan"
     foreach ($file in $createdFiles) {
-        Write-ColorOutput "  - $file" "White"
+        Write-ColorOutput "  -  $file" "White"
     }
     
     Write-ColorOutput "Usage examples:" "Yellow"
